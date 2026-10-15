@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Usuarios de la organización">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Vuestra defensa de la clase 02: solo se carga lo que venga de este
+       mismo servidor, y nada de codigo escrito dentro del HTML. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+  <title>Equipo · Artxibo</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+
+  <script src="/js/api.js" defer></script>
+  <script src="/js/equipo.js" defer></script>
+</head>
+<body>
+
+  <header class="barra">
+    <div class="barra__interior">
+      <a class="marca" href="/panel.html">
+        <span class="marca__icono" aria-hidden="true">&#9636;</span> Artxibo
+      </a>
+
+      <nav aria-label="Principal">
+        <ul class="menu">
+          <li><a href="/panel.html">Documentos</a></li>
+          <li><a href="/analisis.html">Análisis</a></li>
+          <li><a href="/equipo.html" aria-current="page">Equipo</a></li>
+          <li><a href="/plan.html">Plan</a></li>
+        </ul>
+      </nav>
+
+      <p class="sesion">ana@euneiz <span class="rol">admin</span></p>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <h1>Equipo de <span class="org">Consultoría Gorbea</span></h1>
+
+    <p class="deuda" role="note">
+      <strong>Aviso del laboratorio:</strong> aquí todo el mundo es
+      <code>admin</code>, y eso está mal a propósito. Un panel donde cualquiera
+      administra a cualquiera es <strong>A01:2025 Broken Access Control</strong>.
+      Lo arreglaremos en la clase 06, cuando existan roles de verdad.
+    </p>
+
+    <section aria-labelledby="t-equipo">
+      <div class="seccion__cabecera">
+        <h2 id="t-equipo">Usuarios de la organización</h2>
+        <span class="enlace-discreto" data-campo="total">&mdash;</span>
+      </div>
+
+      <table>
+        <caption>Personas con acceso a esta organización</caption>
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Correo</th>
+            <th scope="col">Rol</th>
+            <th scope="col">Alta</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-equipo">
+          <tr><td colspan="5" class="cargando">Cargando&hellip;</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Artxibo &middot; Desarrollo Web Seguro &middot; EUNEIZ</p>
+  </footer>
+
+</body>
+</html>

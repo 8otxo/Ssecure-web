@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Plan contratado y consumo">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Vuestra defensa de la clase 02: solo se carga lo que venga de este
+       mismo servidor, y nada de codigo escrito dentro del HTML. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+  <title>Plan · Artxibo</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+
+  <script src="/js/api.js" defer></script>
+  <script src="/js/plan.js" defer></script>
+</head>
+<body>
+
+  <header class="barra">
+    <div class="barra__interior">
+      <a class="marca" href="/panel.html">
+        <span class="marca__icono" aria-hidden="true">&#9636;</span> Artxibo
+      </a>
+
+      <nav aria-label="Principal">
+        <ul class="menu">
+          <li><a href="/panel.html">Documentos</a></li>
+          <li><a href="/analisis.html">Análisis</a></li>
+          <li><a href="/equipo.html">Equipo</a></li>
+          <li><a href="/plan.html" aria-current="page">Plan</a></li>
+        </ul>
+      </nav>
+
+      <p class="sesion">ana@euneiz <span class="rol">admin</span></p>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <h1>Plan de <span class="org">Consultoría Gorbea</span></h1>
+
+    <h2 class="titulo-seccion">Consumo del mes</h2>
+    <ul class="tarjetas">
+      <li class="tarjeta">
+        <p class="tarjeta__nombre">Plan</p>
+        <p class="tarjeta__dato" data-campo="plan">&mdash;</p>
+        <p class="tarjeta__pie">contratado</p>
+      </li>
+      <li class="tarjeta">
+        <p class="tarjeta__nombre">Documentos</p>
+        <p class="tarjeta__dato" data-campo="documentos">&mdash;</p>
+        <p class="tarjeta__pie" data-campo="documentos-pie">&mdash;</p>
+      </li>
+      <li class="tarjeta">
+        <p class="tarjeta__nombre">Análisis</p>
+        <p class="tarjeta__dato" data-campo="analisis">&mdash;</p>
+        <p class="tarjeta__pie" data-campo="analisis-pie">&mdash;</p>
+      </li>
+      <li class="tarjeta">
+        <p class="tarjeta__nombre">Renovación</p>
+        <p class="tarjeta__dato tarjeta__dato--fecha" data-campo="renovacion">&mdash;</p>
+        <p class="tarjeta__pie">próximo cargo</p>
+      </li>
+    </ul>
+
+    <section aria-labelledby="t-pago">
+      <div class="seccion__cabecera">
+        <h2 id="t-pago">Método de pago</h2>
+        <span class="enlace-discreto">clase 06</span>
+      </div>
+      <p class="pendiente">Pendiente &middot; el cobro se integra en la clase 06</p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Artxibo &middot; Desarrollo Web Seguro &middot; EUNEIZ</p>
+  </footer>
+
+</body>
+</html>

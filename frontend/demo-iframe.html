@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>DEMO — ¿Protege X-Frame-Options dentro de un meta?</title>
+  <link rel="stylesheet" href="/css/base.css">
+  <!-- Esta página hace de "sitio del atacante": intenta meter el login del
+       laboratorio dentro de un iframe. Es exactamente lo que haría alguien
+       montando un ataque de clickjacking. -->
+</head>
+<body>
+  <main>
+    <h1>Demostración: el metadato que no hace nada</h1>
+
+    <p>La página <code>/login.html</code> lleva este metadato en su
+      <code>&lt;head&gt;</code>:</p>
+
+    <p><code>&lt;meta http-equiv="X-Frame-Options" content="DENY"&gt;</code></p>
+
+    <p><strong>Si funcionara</strong>, el recuadro de abajo aparecería vacío o
+      con un error: el navegador se negaría a cargar ahí el login.</p>
+
+    <iframe src="/login.html"
+            title="El login del laboratorio, cargado dentro de un iframe"
+            width="100%" height="380"
+            style="border: 3px solid #c00;"></iframe>
+
+    <h2>¿Qué veis?</h2>
+
+    <p>El login se ve perfectamente. Por lo tanto: <strong>el metadato no ha
+      hecho absolutamente nada.</strong> No ha dado ningún error, no ha avisado
+      en la consola: simplemente el navegador lo ha ignorado.</p>
+
+    <p>Esto es <strong>clickjacking</strong>: un atacante puede cargar vuestra web
+      dentro de la suya, ponerle encima botones transparentes, y conseguir que la
+      víctima pulse donde él quiera creyendo que está en vuestro sitio.</p>
+
+    <h2>¿Por qué no funciona?</h2>
+
+    <p>El estándar HTML solo admite <strong>cinco</strong> valores en
+      <code>http-equiv</code>, y <code>X-Frame-Options</code> no está entre ellos.
+      Lo mismo le pasa a <code>X-Content-Type-Options</code>.</p>
+
+    <p>Las dos <strong>solo funcionan como cabecera HTTP</strong>, y las cabeceras
+      las manda el servidor, no el documento. Por eso existe NGINX en nuestra
+      arquitectura, y por eso hay una clase entera dedicada a esto:
+      <strong>la clase 8</strong>.</p>
+
+    <p><strong>Conclusión práctica:</strong> no perdáis el tiempo poniéndolo en un
+      <code>&lt;meta&gt;</code>. Es peor que no ponerlo, porque os hace creer que
+      estáis protegidos.</p>
+
+    <p><a href="/login.html">Volver al login</a></p>
+  </main>
+</body>
+</html>

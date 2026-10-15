@@ -1,0 +1,263 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PANEL — solo lo que existe en esta vista
+   ══════════════════════════════════════════════════════════════════════════
+   Los colores, la tipografía, el foco y los formularios están en base.css,
+   que comparten las tres vistas. Aquí va lo que solo tiene el panel:
+   la barra de navegación, las tarjetas de resumen y la tabla.
+
+   Por eso panel.html enlaza LAS DOS hojas, y en este orden:
+       <link rel="stylesheet" href="/css/base.css">
+       <link rel="stylesheet" href="/css/panel.css">
+   El orden importa: si dos reglas apuntan a lo mismo, gana la última.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Barra superior ─────────────────────────────────────────────── */
+.barra {
+  background: var(--marca);
+  color: #fff;
+}
+.barra__interior {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-height: 60px;
+}
+.marca {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: .02em;
+}
+.marca__icono { opacity: .75; margin-right: .25rem; }
+
+.menu {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.menu a {
+  color: #d8ecec;
+  text-decoration: none;
+  font-size: .94rem;
+  padding: .35rem 0;
+  border-bottom: 2px solid transparent;
+}
+.menu a:hover { color: #fff; }
+.menu a[aria-current="page"] {
+  color: #fff;
+  font-weight: 600;
+  border-bottom-color: #fff;
+}
+
+/* margin-left:auto empuja este bloque —y solo este— al extremo derecho.
+   El menú se queda pegado a la marca, a la izquierda. */
+.sesion {
+  margin: 0 0 0 auto;
+  font-size: .85rem;
+  color: #d8ecec;
+  white-space: nowrap;
+}
+.rol {
+  background: var(--marca-oscura);
+  padding: .1rem .5rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  margin-left: .35rem;
+}
+
+.menu__pendiente {
+  color: #9dc4c4;
+  font-size: .94rem;
+  padding: .35rem 0;
+  border-bottom: 2px solid transparent;
+  cursor: default;
+}
+
+/* ── Contenido ──────────────────────────────────────────────────── */
+.contenedor {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.org { color: var(--marca); }
+
+.titulo-seccion {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--tinta-suave);
+  font-weight: 600;
+  margin: 0 0 .75rem;
+}
+
+/* ── Tarjetas de resumen ────────────────────────────────────────── */
+.tarjetas {
+  list-style: none;
+  margin: 0 0 2.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+.tarjeta {
+  background: var(--papel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 1rem 1.15rem;
+  border-left: 4px solid var(--marca);
+}
+.tarjeta--pendiente {
+  border-left-color: var(--borde);
+  background: #fbfcfd;
+}
+.tarjeta__nombre {
+  margin: 0;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--tinta-suave);
+  font-weight: 600;
+}
+.tarjeta__dato {
+  margin: .3rem 0 .15rem;
+  font-size: 1.9rem;
+  font-weight: 650;
+  line-height: 1;
+}
+.tarjeta--pendiente .tarjeta__dato { color: #b7c2cd; }
+.tarjeta__pie {
+  margin: 0;
+  font-size: .75rem;
+  color: var(--tinta-suave);
+}
+
+/* ── Cabecera de sección ────────────────────────────────────────── */
+.seccion__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 .85rem;
+}
+.seccion__cabecera h2 {
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 650;
+}
+.enlace-discreto {
+  font-size: .88rem;
+  color: var(--marca);
+}
+
+/* ── Tabla ──────────────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--papel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+caption {
+  text-align: left;
+  font-size: .82rem;
+  color: var(--tinta-suave);
+  padding: 0 0 .5rem;
+}
+thead th {
+  background: #eef2f5;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--tinta-suave);
+}
+th, td {
+  text-align: left;
+  padding: .7rem .9rem;
+  border-bottom: 1px solid var(--borde);
+  font-size: .93rem;
+}
+tbody tr:last-child th,
+tbody tr:last-child td { border-bottom: none; }
+tbody th[scope="row"] {
+  font-weight: 600;
+  word-break: break-word;   /* un nombre de archivo largo no rompe la tabla */
+}
+/* Las columnas cortas no se parten: solo el nombre puede hacerlo. */
+td { white-space: nowrap; }
+tbody tr:hover { background: #f8fafb; }
+
+.cargando {
+  color: var(--tinta-suave);
+  font-style: italic;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.etiqueta {
+  display: inline-block;
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .15rem .55rem;
+  border-radius: 999px;
+}
+.etiqueta--ok     { background: #e3f3ea; color: var(--ok); }
+.etiqueta--espera { background: #fdf3de; color: var(--espera); }
+
+.pendiente {
+  background: var(--papel);
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio);
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--tinta-suave);
+  font-size: .9rem;
+  margin: 0;
+}
+
+/* ── Pie ────────────────────────────────────────────────────────── */
+.pie {
+  border-top: 1px solid var(--borde);
+  background: var(--papel);
+}
+.pie p {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  font-size: .82rem;
+  color: var(--tinta-suave);
+}
+
+@media (max-width: 720px) {
+  .tarjetas { grid-template-columns: repeat(2, 1fr); }
+  .menu { display: none; }
+}
+
+/* ── Aviso de deuda declarada ────────────────────────────────────────────
+   Las cosas que están mal A PROPÓSITO se señalan en la propia pantalla.
+   Un fallo conocido y escrito no es lo mismo que un fallo escondido.      */
+.deuda {
+  background: #fdf3de;
+  border-left: 4px solid #8a6100;
+  border-radius: var(--radio);
+  padding: .9rem 1.1rem;
+  margin: 0 0 1.75rem;
+  font-size: .92rem;
+  color: #6b4b00;
+}
+.deuda code {
+  background: #f6e7c4;
+  padding: .05rem .3rem;
+  border-radius: 4px;
+}
+
+.rol--tabla { background: #eef2f5; color: var(--tinta-suave); }
+
+.tarjeta__dato--fecha { font-size: 1.15rem; }

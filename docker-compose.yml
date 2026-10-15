@@ -1,0 +1,137 @@
+# ===========================================================================
+# secure-web-lab · Clase 01 — laboratorio por FASES
+# ---------------------------------------------------------------------------
+# FASE 2/3 (la web):        db + backend + frontend   -> make fase3-web
+#                           navegador: http://localhost:8080  (nginx directo)
+#
+# FASE 4 (los atacantes):   + mitm + sniffer          -> make fase4-ataque
+#                           el mitm SECUESTRA el 8080 y el nginx directo pasa
+#                           al 8081. La URL del alumno NO cambia: por eso la
+#                           demo es realista (no se nota que hay un intruso).
+#
+# Los atacantes están tras el perfil "ataque": un `docker compose up -d` normal
+# NO los arranca. Se activan a propósito, cuando la web ya funciona.
+# ===========================================================================
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-securelab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securelab_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-securelab}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - web_net
+    # Sin `ports`: la BD NO es alcanzable desde el host, solo por la red interna.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-securelab}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      SECRET_KEY: ${SECRET_KEY:-insecure-dev-key}
+    ports:
+      # Concesión temporal de la clase 1 (Swagger cómodo). Se cierra en clase 04:
+      # es una ruta directa que evita el proxy -> A01/A02.
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - web_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    expose:
+      - "80"
+    ports:
+      # FASE 3: 8080 (el alumno entra aquí directamente).
+      # FASE 4: 8081 (el mitm le quita el 8080). Lo cambia `make fase4-ataque`.
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Único servicio con un pie en cada lado: recibe al usuario por `ruta_usuario`
+    # y habla con la API por la red privada. Es la definición de punto de entrada.
+    networks:
+      - ruta_usuario
+      - web_net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------- FASE 4 ---
+  # Demo B — MITM ACTIVO en capa de aplicación (L7): proxy inverso interpuesto.
+  # En fase 4 ocupa el 8080, el puerto que el alumno ya tenía abierto, y
+  # reenvía al frontend. Puede LEER y MODIFICAR peticiones/respuestas HTTP.
+  mitm:
+    profiles: ["ataque"]
+    build: ./mitm
+    ports:
+      - "${MITM_HOST_PORT:-8081}:8080"
+    environment:
+      MITM_UPSTREAM: http://frontend:80
+      MITM_PORT: "8080"
+      CAPTURE_LOG: /var/log/mitm/capture.log
+    depends_on:
+      frontend:
+        condition: service_healthy
+    # SOLO en `ruta_usuario`: el atacante está en el camino del usuario, NO dentro
+    # de la red del proyecto. No puede alcanzar el backend ni la base de datos,
+    # igual que un AP falso o un proxy malicioso en una wifi hostil.
+    networks:
+      - ruta_usuario
+    healthcheck:
+      test: ["CMD", "test", "-f", "/var/log/mitm/capture.log"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Demo A — atacante PASIVO en capa de red (L3/L4): sniffer que NO está en la
+  # ruta. Comparte el network namespace del backend para escuchar su tráfico
+  # sin reenviarlo. Demuestra que el tráfico interno también va sin cifrar.
+  sniffer:
+    profiles: ["ataque"]
+    build: ./sniffer
+    network_mode: "service:backend"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pidof tcpdump || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  # El camino por el que el usuario llega a la web. Aquí es donde se cuela el
+  # MITM en la fase 4 — fuera de la red privada del proyecto.
+  ruta_usuario:
+    driver: bridge
+  # La red privada del proyecto: frontend + backend + db.
+  web_net:
+    driver: bridge
+
+volumes:
+  pgdata:

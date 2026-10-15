@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- ══ 1. CODIFICACIÓN: siempre lo PRIMERO del <head> ══════════════════
+       Si no se declara, el navegador tiene que adivinarla y puede
+       equivocarse. Debe estar dentro de los primeros 1024 bytes. -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ══ 2. DESCRIPCIÓN: genérica a propósito ════════════════════════════
+       Nunca describas la arquitectura interna ("portal admin con MySQL"):
+       le estarías dando el mapa al atacante. -->
+  <meta name="description" content="Acceso al laboratorio de la asignatura">
+
+  <!-- ══ 3. BUSCADORES ══════════════════════════════════════════════════
+       Una pantalla de acceso no debe salir en Google. -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- ══ 4. REFERRER: evita filtrar la URL a terceros ═══════════════════
+       Sin esto, al salir hacia otra web le envías tu URL COMPLETA, con
+       los tokens o identificadores que lleve. -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- ══ 5. CSP: de los POCOS que SÍ funcionan en <meta> ════════════════
+       'self' = solo recursos de nuestro propio origen. Bloquea scripts
+       inline y recursos externos.
+       OJO: en <meta> se IGNORAN frame-ancestors, report-uri y sandbox. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+  <!-- ══ 6. ¡ESTE NO FUNCIONA! Está aquí solo para la DEMOSTRACIÓN ══════
+       X-Frame-Options NO es un valor válido de http-equiv: el navegador
+       lo lee, no lo entiende y lo IGNORA en silencio. No da ningún error,
+       así que parece que te protege... y no lo hace.
+       Compruébalo tú: abre  http://localhost:8080/demo-iframe.html
+       Se arregla en la CLASE 8, como cabecera HTTP enviada por NGINX.
+       CONCLUSIÓN: no lo pongas nunca así. -->
+  <meta http-equiv="X-Frame-Options" content="DENY">
+
+  <title>Login — Secure Web Lab</title>
+  <link rel="stylesheet" href="/css/base.css">
+  <script src="/js/login.js" defer></script>
+</head>
+<body>
+  <main class="acceso">
+    <h1>Secure Web Lab</h1>
+    <p class="subtitulo">Acceso al laboratorio</p>
+    <!-- novalidate = "navegador, no pongas TÚ los mensajes de error: ya me
+     encargo yo con JavaScript". Sin esto, el required de abajo se dispara
+     antes y nuestro login.js no llega a ejecutarse nunca.
+     El required se queda igualmente: es la red de seguridad si alguien
+     entra con JavaScript desactivado. -->
+    <form action="/api/login" method="post" novalidate>
+      <div>
+        <label for="username">Usuario</label>
+        <input id="username" name="username" type="text" required autocomplete="username">
+      </div>
+      <div>
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button type="submit">Entrar</button>
+    </form>
+    <p class="hint">¿No tienes cuenta? <a href="/register.html">Crea una</a></p>
+    <p class="hint">Demo: admin / admin123 (HTTP plano — solo laboratorio)</p>
+  </main>
+</body>
+</html>

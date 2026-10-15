@@ -1,0 +1,112 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  INTEGRACIÓN CONTINUA — se ejecuta sola en cada `git push`
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#  Esto es la casilla "CI" de la tubería DevSecOps que vimos en teoría, pero
+#  funcionando de verdad. Cada vez que subas código, GitHub levanta una máquina
+#  virtual gratis, monta tu laboratorio y ejecuta los tests. Si algo falla, te
+#  avisa por correo y marca el commit con una ✗ roja.
+#
+#  NO NECESITAS NINGÚN SERVIDOR: la máquina la pone GitHub y se destruye al
+#  terminar. Es gratis en repositorios públicos, y en privados tienes una cuota
+#  mensual de minutos que este laboratorio no va a agotar (tarda ~2 minutos).
+#
+#  El pipeline va en DOS ETAPAS, y el orden importa:
+#    1) estáticos → segundos, no necesitan Docker. Fallo rápido y barato.
+#    2) dinámicos → solo si los estáticos pasan. Levantan el laboratorio entero.
+#
+# ───────────────────────────────────────────────────────────────────────────
+#  ¿HAY QUE TOCAR ESTE ARCHIVO AL AÑADIR TESTS NUEVOS?  →  NO.
+#
+#  `pytest tests/` recoge AUTOMÁTICAMENTE cualquier archivo `test_*.py` que
+#  haya en esa carpeta. Añade tests_clase02, tests_clase03... y se ejecutarán
+#  solos. Tampoco hay que tocarlo si añades un servicio nuevo al
+#  docker-compose.yml, ni si añades un paquete a requirements-dev.txt.
+#
+#  Solo habrá que ampliarlo en tres casos:
+#    · si hace falta una HERRAMIENTA nueva que no sea Python (p. ej. Node.js
+#      para Vitest, desde la clase 03) → se añade un job nuevo
+#    · si un test necesita el laboratorio en otro estado (p. ej. HTTPS en la
+#      clase 07, o los atacantes activos)
+#    · si escribes un test estático cuyo nombre NO lleve "estatico": seguiría
+#      ejecutándose, pero en la etapa 2 en vez de en la 1
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: Tests
+
+# CUÁNDO se ejecuta
+on:
+  push:                    # en cada subida de código
+  pull_request:            # y al proponer cambios
+  workflow_dispatch:       # y a mano, con un botón en la pestaña Actions
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  #  ETAPA 1 · ESTÁTICOS — analizan el docker-compose.yml sin ejecutarlo
+  # ─────────────────────────────────────────────────────────────────────────
+  estaticos:
+    name: Estáticos (no necesitan Docker)
+    runs-on: ubuntu-latest        # la máquina virtual que pone GitHub
+
+    steps:
+      # Descarga tu repositorio en la máquina
+      - uses: actions/checkout@v4
+
+      # Instala Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias de test
+        run: pip install -r requirements-dev.txt
+
+      # -k estatico  → solo los tests con "estatico" en el nombre
+      # -rxX         → muestra el motivo de los XFAIL/XPASS al final
+      - name: Ejecutar tests estáticos
+        run: pytest tests/ -k estatico -v -rxX
+
+  # ─────────────────────────────────────────────────────────────────────────
+  #  ETAPA 2 · DINÁMICOS — levantan el laboratorio y lo interrogan
+  # ─────────────────────────────────────────────────────────────────────────
+  dinamicos:
+    name: Dinámicos (laboratorio en marcha)
+    runs-on: ubuntu-latest
+    needs: estaticos              # no arranca si la etapa 1 ha fallado
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias de test
+        run: pip install -r requirements-dev.txt
+
+      # El .env NO está en el repositorio (lleva contraseñas y está en
+      # .gitignore). Lo creamos aquí desde la plantilla, igual que hace
+      # `make setup` en tu equipo.
+      - name: Preparar variables de entorno
+        run: cp .env.example .env
+
+      # --wait espera a que los contenedores estén SANOS, no solo encendidos.
+      # No nombramos servicios a propósito: así, cuando en clases posteriores
+      # se añada uno nuevo a la aplicación, se levantará solo sin tocar este
+      # archivo. Los atacantes (mitm, sniffer) siguen fuera porque están tras
+      # el perfil `ataque`, y sin `--profile ataque` Compose los ignora.
+      - name: Levantar el laboratorio
+        run: docker compose up -d --wait
+
+      - name: Ejecutar todos los tests
+        run: pytest tests/ -v -rxX
+
+      # Si algo falla, los logs de los contenedores son lo primero que querrás ver
+      - name: Logs de los contenedores (solo si falla)
+        if: failure()
+        run: docker compose logs
+
+      # `always()` = hazlo aunque los tests hayan fallado
+      - name: Apagar y limpiar
+        if: always()
+        run: docker compose down -v

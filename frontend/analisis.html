@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Análisis de documentos">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Vuestra defensa de la clase 02: solo se carga lo que venga de este
+       mismo servidor, y nada de codigo escrito dentro del HTML. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+  <title>Análisis · Artxibo</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+
+  <script src="/js/api.js" defer></script>
+  <script src="/js/analisis.js" defer></script>
+</head>
+<body>
+
+  <header class="barra">
+    <div class="barra__interior">
+      <a class="marca" href="/panel.html">
+        <span class="marca__icono" aria-hidden="true">&#9636;</span> Artxibo
+      </a>
+
+      <nav aria-label="Principal">
+        <ul class="menu">
+          <li><a href="/panel.html">Documentos</a></li>
+          <li><a href="/analisis.html" aria-current="page">Análisis</a></li>
+          <li><a href="/equipo.html">Equipo</a></li>
+          <li><a href="/plan.html">Plan</a></li>
+        </ul>
+      </nav>
+
+      <p class="sesion">ana@euneiz <span class="rol">admin</span></p>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <h1>Análisis de <span class="org">Consultoría Gorbea</span></h1>
+
+    <section aria-labelledby="t-analisis">
+      <div class="seccion__cabecera">
+        <h2 id="t-analisis">Análisis lanzados</h2>
+        <span class="enlace-discreto" data-campo="total">&mdash;</span>
+      </div>
+
+      <table>
+        <caption>Análisis sobre los documentos de la organización</caption>
+        <thead>
+          <tr>
+            <th scope="col">Documento</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Duración</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-analisis">
+          <tr><td colspan="4" class="cargando">Cargando&hellip;</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Artxibo &middot; Desarrollo Web Seguro &middot; EUNEIZ</p>
+  </footer>
+
+</body>
+</html>

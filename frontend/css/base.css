@@ -1,0 +1,117 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   BASE — lo que comparten las TRES vistas: login, registro y panel
+   ══════════════════════════════════════════════════════════════════════════
+   Aquí van los colores, la tipografía, el foco y los formularios.
+   Lo que solo usa el panel (barra, tarjetas, tabla) vive en panel.css.
+
+   Por qué separarlo así: cuando cambiéis el color de marca, lo cambiáis en
+   UNA línea de este archivo y cambia en las tres vistas a la vez.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Las variables viven en :root, que es la etiqueta <html>.
+   Valen para toda la página y se leen con var(--nombre). */
+:root {
+  --marca:        #0f6c6c;
+  --marca-oscura: #0a4f4f;
+  --tinta:        #16202b;
+  --tinta-suave:  #5b6b7c;
+  --borde:        #dde3e9;
+  --fondo:        #f5f7f9;
+  --papel:        #ffffff;
+  --foco:         #0057b8;
+  --radio:        10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--tinta);
+  background: var(--fondo);
+  line-height: 1.5;
+}
+
+/* ── El foco del teclado: SIEMPRE visible ──────────────────────────────────
+   :focus-visible se activa al llegar con TAB, no al pulsar con el ratón.
+   Quien navega sin ratón y no ve dónde está, pulsa Enter a ciegas.
+   Por eso nunca se escribe outline: none.                                   */
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1 { font-size: 1.6rem; margin: 0 0 .5rem; font-weight: 650; }
+h2 { font-size: 1.1rem; margin: 0;         font-weight: 650; }
+
+a { color: var(--marca); }
+
+/* ── Formularios ─────────────────────────────────────────────────────────── */
+form div { margin-bottom: 1rem; }
+
+label {
+  display: block;
+  margin-bottom: .3rem;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+input {
+  width: 100%;
+  padding: .6rem .7rem;
+  font: inherit;
+  color: var(--tinta);
+  background: var(--papel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+input:focus { border-color: var(--marca); }
+
+button, .boton {
+  font: inherit;
+  font-size: .95rem;
+  font-weight: 600;
+  background: var(--marca);
+  color: #fff;
+  border: none;
+  border-radius: var(--radio);
+  padding: .6rem 1.2rem;
+  cursor: pointer;
+}
+button:hover, .boton:hover { background: var(--marca-oscura); }
+
+/* ── La tarjeta de acceso: login y registro ──────────────────────────────── */
+.acceso {
+  max-width: 26rem;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--papel);
+  border: 1px solid var(--borde);
+  border-top: 4px solid var(--marca);
+  border-radius: var(--radio);
+}
+.acceso h1 { color: var(--marca); }
+.acceso button { width: 100%; margin-top: .5rem; }
+
+.hint {
+  font-size: .85rem;
+  color: var(--tinta-suave);
+  margin: 1.25rem 0 0;
+}
+
+.subtitulo {
+  margin: 0 0 1.5rem;
+  color: var(--tinta-suave);
+  font-size: .95rem;
+}
+
+/* ── Mensajes de error de los formularios ───────────────────────────────── */
+.error {
+  margin: .35rem 0 0;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #b00020;
+}
+input[aria-invalid="true"] { border-color: #b00020; }

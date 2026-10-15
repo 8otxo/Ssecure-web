@@ -1,0 +1,45 @@
+# ===========================================================================
+# Qué NO sube a GitHub. Míralo antes de tu primer `git add .`
+# ===========================================================================
+
+# --- SECRETOS -------------------------------------------------------------
+# .env lleva contraseñas (ADMIN_PASSWORD, SECRET_KEY, credenciales de la BD).
+# Se versiona .env.example, que es la plantilla SIN valores reales.
+# Un secreto subido a GitHub se considera comprometido aunque borres el commit:
+# queda en el historial y los bots lo encuentran en minutos.
+.env
+*.pem
+*.key
+
+# --- Entorno virtual (25 MB, se recrea con `make setup`) ------------------
+.venv/
+venv/
+env/
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Node (desde la clase 03) ---------------------------------------------
+node_modules/
+npm-debug.log*
+
+# --- Base de datos y capturas del laboratorio -----------------------------
+*.db
+*.sqlite3
+*.pcap
+*.log
+
+# --- Copias de seguridad y temporales -------------------------------------
+*.bak
+*.orig
+*~
+
+# --- Sistema operativo / editor -------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

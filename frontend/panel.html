@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panel de gestión documental">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Vuestra defensa de la clase 02. En la clase 03 la vais a ver trabajar:
+       bloquea el JavaScript escrito dentro del HTML y los manejadores de
+       evento inline, que son por donde entra un XSS. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+  <title>Panel · Artxibo</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+
+  <!-- El JavaScript va SIEMPRE en su archivo, nunca dentro del HTML.
+       defer = espera a que el documento exista antes de ejecutarse. -->
+  <script src="/js/api.js" defer></script>
+  <script src="/js/panel.js" defer></script>
+</head>
+<body>
+
+  <header class="barra">
+    <div class="barra__interior">
+      <a class="marca" href="/panel.html">
+        <span class="marca__icono" aria-hidden="true">&#9636;</span> Artxibo
+      </a>
+
+      <nav aria-label="Principal">
+        <ul class="menu">
+          <li><a href="/panel.html" aria-current="page">Documentos</a></li>
+          <li><a href="/analisis.html">Análisis</a></li>
+          <li><a href="/equipo.html">Equipo</a></li>
+          <li><a href="/plan.html">Plan</a></li>
+        </ul>
+      </nav>
+
+      <p class="sesion">ana@euneiz <span class="rol">admin</span></p>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <h1>Panel de <span class="org">Consultoría Gorbea</span></h1>
+
+    <h2 class="titulo-seccion">Resumen</h2>
+    <ul class="tarjetas">
+      <li class="tarjeta">
+        <p class="tarjeta__nombre">Documentos</p>
+        <p class="tarjeta__dato" data-campo="documentos">&mdash;</p>
+        <p class="tarjeta__pie">se conecta hoy</p>
+      </li>
+      <li class="tarjeta tarjeta--pendiente">
+        <p class="tarjeta__nombre">Análisis</p>
+        <p class="tarjeta__dato">&mdash;</p>
+        <p class="tarjeta__pie">clase 4</p>
+      </li>
+      <li class="tarjeta tarjeta--pendiente">
+        <p class="tarjeta__nombre">Plan</p>
+        <p class="tarjeta__dato">&mdash;</p>
+        <p class="tarjeta__pie">clase 6</p>
+      </li>
+      <li class="tarjeta tarjeta--pendiente">
+        <p class="tarjeta__nombre">Usuarios</p>
+        <p class="tarjeta__dato">&mdash;</p>
+        <p class="tarjeta__pie">clase 6</p>
+      </li>
+    </ul>
+
+    <section aria-labelledby="t-docs">
+      <div class="seccion__cabecera">
+        <h2 id="t-docs">Mis documentos</h2>
+        <button type="button" class="boton">Subir documento</button>
+      </div>
+
+      <table>
+        <caption>Documentos de la organización, más recientes primero</caption>
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Tamaño</th>
+            <th scope="col">Subido</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-documentos">
+          <tr><td colspan="4" class="cargando">Cargando&hellip;</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-labelledby="t-audit">
+      <div class="seccion__cabecera">
+        <h2 id="t-audit">Registro de auditoría</h2>
+        <span class="enlace-discreto">clase 8</span>
+      </div>
+      <p class="pendiente">Pendiente &middot; se conecta en la clase 8</p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Artxibo &middot; Desarrollo Web Seguro &middot; EUNEIZ</p>
+  </footer>
+
+</body>
+</html>

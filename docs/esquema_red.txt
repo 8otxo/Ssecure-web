@@ -1,0 +1,262 @@
+
+======================================================================
+ LO QUE VAMOS A CONSTRUIR  (todavía no existe nada de esto)
+======================================================================
+
+ OJO CON LOS PUERTOS: 8080 NO ES OTRO SERVICIO, ES EL MISMO
+ ---------------------------------------------------------------------
+   `ports: "8080:80"`  =  puerto 8080 de TU MÁQUINA  →  puerto 80 del
+   contenedor. Cuando abres localhost:8080 estás entrando por el
+   puerto 80 del frontend; Docker traduce por el camino.
+
+     tu navegador ──▶ :8080 (host) ══traducción══▶ :80 (frontend)
+
+   ¿Por qué no usar el 80 del host directamente? Por convención y para
+   no chocar con lo que ya tengas escuchando ahí. Es solo comodidad.
+
+ FASE 3 · La aplicación web — 3 contenedores, 2 redes
+ ---------------------------------------------------------------------
+
+   TU MÁQUINA
+   ┌──────────────┐
+   │  navegador   │  http://localhost:8080
+   └──────┬───────┘
+          ▼
+  ╔═══════════════════ red "ruta_usuario" ══════════════════════╗
+  ║  el camino del usuario hacia la web                         ║
+  ║        ┌──────────────┐                                     ║
+  ║        │   frontend   │ :80  ◀── aquí llega el 8080         ║
+  ║        │    NGINX     │      único servicio con un pie      ║
+  ╚════════╧══════╤═══════╧════  en cada red  ══════════════════╝
+                  │ proxy de /api/
+  ╔═══════════════╪═══════ red "web_net" ═══════════════════════╗
+  ║               ▼           privada: aquí no entra nadie      ║
+  ║        ┌──────────────┐  :5432  ┌──────────────┐            ║
+  ║        │   backend    │────────▶│      db      │            ║
+  ║        │   FastAPI    │         │   Postgres   │            ║
+  ║        └──────┬───────┘         └──────────────┘            ║
+  ║               │                  sin puerto al host         ║
+  ╚═══════════════╪═════════════════════════════════════════════╝
+                  │ :8000 publicado  ⚠ DEUDA DELIBERADA
+                  ▲
+      curl / pytest ── se salta el frontend. Lo cierra la clase 04.
+
+ FASE 4 · Se añaden los dos atacantes — 5 contenedores
+ ---------------------------------------------------------------------
+
+   El mitm SE QUEDA el 8080 (la URL que ya usabas) y el nginx directo
+   se desplaza al 8081. Tú no cambias nada; ya estás interceptado.
+
+   TU MÁQUINA
+   ┌──────────────┐
+   │  navegador   │  http://localhost:8080  (no has tocado nada)
+   └──────┬───────┘
+          ▼
+  ╔═══════════════════ red "ruta_usuario" ══════════════════════╗
+  ║        ┌──────────────┐                                     ║
+  ║        │     mitm     │  lee Y MODIFICA el HTTP             ║
+  ║        │  mitmproxy   │  = AP falso, proxy malicioso, ARP   ║
+  ║        └──────┬───────┘    spoofing... está EN tu camino    ║
+  ║               ▼                                             ║
+  ║        ┌──────────────┐ :80 ◀── :8081 del host (ruta limpia)║
+  ║        │   frontend   │                                     ║
+  ╚════════╧══════╤═══════╧═════════════════════════════════════╝
+                  │
+  ╔═══════════════╪═══════ red "web_net" ═══════════════════════╗
+  ║               ▼                                             ║
+  ║        ┌──────────────┐  :5432  ┌──────────────┐            ║
+  ║        │   backend    │────────▶│      db      │            ║
+  ║        │   FastAPI    │         │   Postgres   │            ║
+  ║        └──────┬───────┘         └──────────────┘            ║
+  ║               │ comparte la RED de este contenedor          ║
+  ║        ┌──────┴───────┐                                     ║
+  ║        │   sniffer    │  tcpdump: solo ESCUCHA, no reenvía  ║
+  ║        │   (L3/L4)    │  = atacante que YA está dentro      ║
+  ║        └──────────────┘                                     ║
+  ╚═════════════════════════════════════════════════════════════╝
+
+   El mitm NO alcanza el backend ni la base de datos: está fuera de
+   la red privada. Compruébalo en la fase 4:
+
+     docker compose exec mitm python3 -c \
+       "import socket; socket.create_connection(('db',5432),timeout=3)"
+     → falla. El atacante del camino no tiene ruta hasta tus datos.
+
+ POR QUÉ CADA ATACANTE ESTÁ DONDE ESTÁ  (y qué simplificamos)
+ ---------------------------------------------------------------------
+   MITM — en `ruta_usuario`, FUERA de la red del proyecto
+   Es lo realista: un atacante que se interpone lo hace en el camino
+   del usuario (wifi abierta, AP falso, ARP spoofing, DNS envenenado,
+   proxy corporativo malicioso), no dentro del centro de datos. Por eso
+   solo ve al frontend: puede leerlo y alterarlo TODO, y aun así no
+   tiene ni ruta ni nombre para llegar al backend o a la BD.
+
+   SNIFFER — comparte la red del backend (`network_mode: service:backend`)
+   Aquí sí hay una simplificación, y conviene decirla en voz alta:
+
+   · Qué representa: un atacante que YA está dentro — ha comprometido
+     ese host o tiene visibilidad de ese segmento. Es el supuesto
+     "assume breach" de Zero Trust: no *si* entran, sino *cuándo*.
+   · Por qué no lo ponemos "escuchando en la red" sin más: porque la
+     red bridge de Docker es CONMUTADA, no un hub. Un contenedor
+     cualquiera NO ve el tráfico unicast de los demás; no vería nada.
+     Para verlo de verdad habría que hacer ARP spoofing entre
+     contenedores, que es otra asignatura.
+   · Compartir el namespace de red es la forma honesta de simular
+     "estoy donde pasa ese tráfico" sin montar un ataque de red.
+   · No le da al backend ninguna exposición nueva: el sniffer no
+     publica puertos ni reenvía nada. Solo mira.
+
+   Lo que demuestra sigue siendo cierto e importante: el tramo interno
+   frontend→backend va sin cifrar, así que quien esté dentro lee las
+   credenciales. Cifrar solo "la última milla" al usuario no basta.
+
+ QUIÉN HABLA CON QUIÉN
+ ---------------------------------------------------------------------
+   ORIGEN          DESTINO     PROTOCOLO      PUERTO   ¿CIFRADO?
+   navegador  ───▶ frontend    HTTP            8080→80   NO  ◀── A04
+   frontend   ───▶ backend     HTTP            8000      NO  ◀── el olvidado
+   backend    ───▶ db          TCP/PostgreSQL  5432      NO
+   (fase 4)
+   navegador  ───▶ mitm        HTTP            8080      NO
+   mitm       ───▶ frontend    HTTP            80        NO
+   mitm       ─X─▶ backend / db   SIN RUTA: está fuera de web_net
+   sniffer    ◀╌╌╌ (escucha el segmento del backend, no reenvía nada)
+
+   El navegador NUNCA habla directamente con la API ni con la BD:
+   todo entra por un único punto (el proxy inverso).
+
+ ACCESO DIRECTO DESDE TU MÁQUINA  ( = superficie de ataque expuesta )
+ ---------------------------------------------------------------------
+   CONTENEDOR   ¿LO ALCANZAS TÚ?              POR QUÉ
+   frontend     SÍ  :8080 (fase 3)            es el punto de entrada
+                    :8081 (fase 4)            legítimo del usuario
+   backend      SÍ  :8000  ⚠ DEUDA            comodidad para ver Swagger;
+                                              es una ruta que EVITA el
+                                              proxy → A01/A02. Se cierra
+                                              en la clase 04.
+   db           NO                            una BD jamás se publica
+   mitm         SÍ  :8080 (solo fase 4)       es el atacante interpuesto
+   sniffer      NO — ni siquiera tiene red propia: comparte la del
+                backend para poder escucharlo
+
+ EXPOSICIÓN: ENTRADA Y SALIDA SON DOS COSAS DISTINTAS
+ ---------------------------------------------------------------------
+   Es el malentendido más habitual con contenedores. Sepáralos siempre.
+
+   (1) ENTRADA  — ¿quién puede iniciar una conexión HACIA el contenedor?
+   ---------------------------------------------------------------------
+   Solo lo que lleva `ports:` es alcanzable desde fuera de la red Docker.
+
+     frontend   SÍ  :8080   ← correcto: es el único punto de entrada
+     backend    SÍ  :8000   ← ⚠ NO debería. Deuda deliberada (clase 04)
+     db         NO          ← correcto: jamás se publica una BD
+     sniffer    NO
+
+   Ninguno de los cinco está "en Internet": para llegar a ellos hay que
+   llegar antes a TU máquina. PERO ojo con el detalle:
+
+     0.0.0.0:8080->80/tcp
+     ^^^^^^^ = TODAS las interfaces de tu equipo, no solo localhost
+
+   Si tu portátil está en la wifi del aula, tus compañeros pueden entrar
+   en tu laboratorio escribiendo tu IP. Compruébalo: pídele a alguien que
+   abra http://<tu-IP>:8080. Y en Linux, Docker escribe sus reglas por
+   debajo del cortafuegos: tener ufw activo NO cierra ese puerto.
+   → publicar un puerto es una decisión de seguridad, no de comodidad.
+
+   (2) SALIDA (egress) — ¿quién puede iniciar conexiones HACIA FUERA?
+   ---------------------------------------------------------------------
+   AL CONSTRUIR todos descargan de Docker Hub, PyPI y los repos de la
+   distribución: estás ejecutando código de terceros → A03 cadena de
+   suministro.
+
+   EN EJECUCIÓN ninguno de los cinco NECESITA Internet... pero los cinco
+   PUEDEN salir, la base de datos incluida. La red bridge de Docker da
+   NAT de salida a todo el mundo por defecto.
+
+   Compruébalo cuando estén levantados (fase 3):
+     docker compose exec db wget -q -O /dev/null -T5 http://example.com \
+       && echo "la BASE DE DATOS tiene salida libre a Internet"
+
+   Eso NO es una puerta de entrada, pero sí es la vía de escape: es la
+   diferencia entre un intruso que se queda mirando y uno que exfiltra la
+   base de datos o recibe órdenes desde fuera (C2). Nadie lo ha decidido:
+   se ha heredado del comportamiento por defecto. → A02
+
+ ENTONCES, ¿CÓMO DEBERÍA SER?  (hacia dónde vamos en el curso)
+ ---------------------------------------------------------------------
+   El objetivo es que SOLO se exponga la puerta de entrada y que todo lo
+   demás se pida desde dentro. Vamos a medio camino:
+
+   YA LO TENEMOS
+     · Dos redes en vez de una: `ruta_usuario` (el camino del usuario) y
+       `web_net` (privada). El frontend es el único con un pie en cada
+       una, y es precisamente el que NO guarda secretos: no conoce la
+       contraseña de la BD ni emite sesiones.
+     · La BD no publica ningún puerto.
+     · El atacante interpuesto no tiene ruta hasta el backend ni la BD.
+
+   NOS FALTA  (y es deliberado, para poder ver los fallos)
+     · `backend` publica el 8000 → ruta que evita el proxy. CLASE 04.
+     · `web_net` NO es `internal: true`, así que backend y BD todavía
+       pueden salir a Internet: la puerta de la exfiltración.
+     · Todo viaja en HTTP plano. CLASE 07.
+
+   El destino, ya con los tres segmentos cerrados:
+
+      Internet/LAN ──▶ [ frontend ]      red "edge"    (única publicada)
+                            │
+                            ▼
+                       [ backend  ]      red "app"     internal: true
+                            │
+                            ▼
+                       [    db    ]      red "data"    internal: true
+
+   `internal: true` en Compose = esa red no tiene salida a Internet ni es
+   alcanzable desde el host. Cada segmento es una frontera más que un
+   atacante debe cruzar: defensa en profundidad.
+
+     Clase 04  quitamos el `ports:` del backend (se acabó la ruta que
+               evita el proxy)
+     Clase 07  HTTPS: aunque alguien escuche, ya no lee nada
+     Clase 08  cabeceras y endurecimiento del punto de entrada
+
+   Regla para el examen y para la vida: por cada puerto publicado tienes
+   que poder decir QUIÉN lo necesita y POR QUÉ. Si no sabes responder,
+   ese puerto sobra.
+
+ QUÉ LLEVA DENTRO CADA CONTENEDOR
+ ---------------------------------------------------------------------
+   db        postgres:16-alpine
+             PostgreSQL 16, pg_isready (healthcheck)
+             Volumen pgdata: los datos sobreviven al contenedor
+
+   backend   python:3.12-slim
+             Al construir: gcc, libpq-dev  (solo para compilar)
+             En ejecución: fastapi, uvicorn, sqlalchemy,
+                           psycopg2-binary, python-multipart, pydantic
+
+   frontend  nginx:1.27-alpine
+             NGINX + nuestro default.conf (proxy /api/ → backend)
+             login.html, dashboard.html, css/  ·  wget para el healthcheck
+
+   mitm      mitmproxy/mitmproxy:11.0.2          [FASE 4 · atacante]
+             mitmdump en modo proxy inverso + addon log_bodies.py
+
+   sniffer   alpine:3.20                          [FASE 4 · atacante]
+             tcpdump, con capacidades NET_RAW y NET_ADMIN
+
+   Todas las bases son -slim o -alpine: menos paquetes instalados =
+   menos vulnerabilidades heredadas = menos superficie de ataque.
+
+ PREGUNTAS ANTES DE CONSTRUIR  (llévalas a la ficha de la fase 1)
+ ---------------------------------------------------------------------
+   1. ¿Por qué tres contenedores y no uno solo con todo dentro?
+   2. De los cinco, ¿cuáles NO existirían en un despliegue real?
+   3. El backend publica el 8000 "por comodidad". ¿Qué se puede hacer
+      desde el host que no debería poderse?
+   4. Si el tráfico interno frontend→backend también va sin cifrar,
+      ¿quién puede leerlo? ¿Hace falta estar en la ruta para ello?
+
+======================================================================
